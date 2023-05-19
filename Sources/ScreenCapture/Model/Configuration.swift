@@ -1,0 +1,31 @@
+//
+//  Configuration.swift
+//  
+//
+//  Created by p-x9 on 2023/05/20.
+//  
+//
+
+import Foundation
+import AVFoundation
+import CoreVideo
+
+public struct Configuration: Equatable {
+    public var codec: AVVideoCodecType
+    public var fileType: AVFileType
+    public var fps: Int
+    public var scale: CGFloat?
+
+    public init(codec: AVVideoCodecType, fileType: AVFileType, fps: Int, scale: CGFloat? = nil) {
+        self.codec = codec
+        self.fileType = fileType
+        self.fps = fps
+        self.scale = scale
+    }
+}
+
+extension Configuration {
+    public static var `default`: Self {
+        .init(codec: .h264, fileType: .mp4, fps: 60, scale: nil)
+    }
+}

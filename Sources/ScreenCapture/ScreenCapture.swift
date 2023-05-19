@@ -23,6 +23,8 @@ public final class ScreenCapture {
 
     private var _state = State()
 
+    public let config: Configuration
+
     private var size: CGSize
     private var scale: CGFloat
     private weak var window: UIWindow?
@@ -32,17 +34,19 @@ public final class ScreenCapture {
 
     private var movieWriter: MovieWriter?
     
-    public init(for window: UIWindow) {
+    public init(for window: UIWindow, with config: Configuration = .default) {
         self.window = window
         self.size = window.bounds.size
-        self.scale = window.screen.scale
+        self.scale = config.scale ?? window.screen.scale
+        self.config = config
     }
 
     @available(iOS 13.0, *)
-    public init(for scene: UIWindowScene) {
+    public init(for scene: UIWindowScene, with config: Configuration = .default) {
         self.windowScene = scene
         self.size = scene.screen.bounds.size
-        self.scale = scene.screen.scale
+        self.scale = config.scale ?? scene.screen.scale
+        self.config = config
     }
 
     public func start(outputURL: URL) throws {
@@ -50,11 +54,15 @@ public final class ScreenCapture {
 
         let size = size.scaled(scale)
 
-        self.movieWriter = .init(outputUrl: outputURL, size: size)
+        self.movieWriter = .init(outputUrl: outputURL,
+                                 size: size,
+                                 codec: config.codec,
+                                 fileType: config.fileType)
 
         try movieWriter?.start()
 
         self.displayLink = CADisplayLink(target: self, selector: #selector(captureFrame(_:)))
+        self.displayLink?.preferredFramesPerSecond = config.fps
         self.displayLink?.add(to: .main, forMode: .common)
 
         self._state = State()
@@ -92,7 +100,7 @@ public final class ScreenCapture {
         guard let buffer else { return }
 
         do {
-            let timeOffset: CFTimeInterval = state.isWaitingFirstFrame ? 0 : link.duration
+            let timeOffset: CFTimeInterval = state.isWaitingFirstFrame ? 0 : 1/CGFloat(config.fps)
             let time = CMTimeAdd(movieWriter.currentTime, CMTime(seconds: timeOffset, preferredTimescale: 1_000_000))
             try movieWriter.write(buffer, at: time)
             _state.frameCount += 1
