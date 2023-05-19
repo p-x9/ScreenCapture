@@ -82,7 +82,7 @@ class MovieWriter {
     func end(at time: CMTime, waitUntilFinish: Bool) throws {
         guard let writerInput, let videoWriter else { return }
 
-        guard time > currentTime else {
+        guard time >= currentTime else {
             throw MovieWriterError.invalidTime
         }
 
@@ -112,7 +112,7 @@ class MovieWriter {
             throw MovieWriterError.notStarted
         }
 
-        guard time > currentTime else {
+        guard time >= currentTime else {
             throw MovieWriterError.invalidTime
         }
 

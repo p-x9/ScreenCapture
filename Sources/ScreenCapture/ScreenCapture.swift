@@ -4,7 +4,24 @@ import CoreMedia
 @available(iOS 13.0, *)
 public final class ScreenCapture {
 
-    public var isRunning = false
+    public struct State: Equatable {
+        public var isRunning = false
+        public var frameCount = 0
+
+        var isWaitingFirstFrame: Bool {
+            frameCount == 0
+        }
+    }
+
+    public var isRunning: Bool {
+        state.isRunning
+    }
+
+    public var state: State {
+        _state
+    }
+
+    private var _state = State()
 
     private var size: CGSize
     private var scale: CGFloat
@@ -40,7 +57,8 @@ public final class ScreenCapture {
         self.displayLink = CADisplayLink(target: self, selector: #selector(captureFrame(_:)))
         self.displayLink?.add(to: .main, forMode: .common)
 
-        self.isRunning = true
+        self._state = State()
+        self._state.isRunning = true
     }
 
     public func end() throws {
@@ -54,7 +72,7 @@ public final class ScreenCapture {
 
         self.displayLink = nil
         self.movieWriter = nil
-        self.isRunning = false
+        self._state.isRunning = false
     }
 
     @objc
@@ -74,8 +92,10 @@ public final class ScreenCapture {
         guard let buffer else { return }
 
         do {
-            let time = CMTimeAdd(movieWriter.currentTime, CMTime(seconds: link.duration, preferredTimescale: 1_000_000))
+            let timeOffset: CFTimeInterval = state.isWaitingFirstFrame ? 0 : link.duration
+            let time = CMTimeAdd(movieWriter.currentTime, CMTime(seconds: timeOffset, preferredTimescale: 1_000_000))
             try movieWriter.write(buffer, at: time)
+            _state.frameCount += 1
         } catch {
             print(error)
         }
