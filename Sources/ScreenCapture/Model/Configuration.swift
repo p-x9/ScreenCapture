@@ -11,9 +11,17 @@ import AVFoundation
 import CoreVideo
 
 public struct Configuration: Equatable {
+
+    /// Codec of  output video
     public var codec: AVVideoCodecType
+
+    /// File type of output video
     public var fileType: AVFileType
+
+    /// Number of frames recorded per second.
     public var fps: Int
+
+    /// scale factor of recording area
     public var scale: CGFloat?
 
     public init(codec: AVVideoCodecType, fileType: AVFileType, fps: Int, scale: CGFloat? = nil) {

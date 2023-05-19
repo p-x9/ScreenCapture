@@ -5,35 +5,60 @@ import CoreMedia
 public final class ScreenCapture {
 
     public struct State: Equatable {
+        /// A Boolean value that indicates whether ScreenCapture is recording.
         public var isRunning = false
+        /// count of recorded frame
         public var frameCount = 0
 
+        /// A Boolean value that indicates whether first frame was recorded.
         var isWaitingFirstFrame: Bool {
             frameCount == 0
         }
     }
 
+    /// A Boolean value that indicates whether ScreenCapture is recording.
+    /// (eq. state.isRunning)
     public var isRunning: Bool {
         state.isRunning
     }
 
+    /// recording state
+    /// it's initialized when `start` method called.
     public var state: State {
         _state
     }
 
     private var _state = State()
 
+    /// configuration of recording
     public let config: Configuration
 
+    /// size of recording area
     private var size: CGSize
+
+    /// scale factor of recording area
+    /// original pixel size is `size` x `scale`
     private var scale: CGFloat
+
+    /// target window to be recorded
+    /// Only either `window` or `windowScene` is set to a value.
     private weak var window: UIWindow?
+
+    /// target windowScene to be recorded
+    /// Only either `window` or `windowScene` is set to a value.
     private weak var windowScene: UIWindowScene?
 
+    /// Used to periodically retrieve frames.
     private var displayLink: CADisplayLink?
 
+    /// Write video files frame by frame
     private var movieWriter: MovieWriter?
-    
+
+
+    /// Initializers for recording a particular window
+    /// - Parameters:
+    ///   - window: target window to be recorded
+    ///   - config: configuration of recording
     public init(for window: UIWindow, with config: Configuration = .default) {
         self.window = window
         self.size = window.bounds.size
@@ -41,6 +66,10 @@ public final class ScreenCapture {
         self.config = config
     }
 
+    /// Initializer for all windows in a scene to be recorded.
+    /// - Parameters:
+    ///   - scene: target windowScene to be recorded
+    ///   - config: configuration of recording
     @available(iOS 13.0, *)
     public init(for scene: UIWindowScene, with config: Configuration = .default) {
         self.windowScene = scene
@@ -49,6 +78,8 @@ public final class ScreenCapture {
         self.config = config
     }
 
+    /// start recording
+    /// - Parameter outputURL: output url of recorded video file
     public func start(outputURL: URL) throws {
         guard !isRunning else { return }
 
@@ -69,6 +100,7 @@ public final class ScreenCapture {
         self._state.isRunning = true
     }
 
+    /// end recording
     public func end() throws {
         if let displayLink,
            let movieWriter {
@@ -83,6 +115,8 @@ public final class ScreenCapture {
         self._state.isRunning = false
     }
 
+    /// Called on every frame update.
+    /// - Parameter link: sender (displayLink)
     @objc
     func captureFrame(_ link: CADisplayLink) {
         guard let movieWriter else { return }

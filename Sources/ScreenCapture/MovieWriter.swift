@@ -12,13 +12,22 @@ import CoreVideo
 
 class MovieWriter {
 
+    /// pixel size of recording area
     let size: CGSize
+
+    /// output url of recorded video file
     let outputUrl: URL
+
+    /// file type of recorded video file
     let fileType: AVFileType
+
     let outputSettings: [String: Any]
     let sourcePixelBufferAttributes: [String: Any]
 
+    /// time in a recorded  video of the last frame written.
     private(set) var currentTime: CMTime = .zero
+
+    /// A Boolean value that indicates whether MovieWriter is recording
     private(set) var isRunning = false
 
     private var videoWriter: AVAssetWriter?
@@ -47,6 +56,7 @@ class MovieWriter {
         ]
     }
 
+    /// start video writing
     func start() throws {
         guard !isRunning else {
             throw MovieWriterError.alreadyRunning
@@ -79,6 +89,7 @@ class MovieWriter {
         isRunning = true
     }
 
+    /// end video writing
     func end(at time: CMTime, waitUntilFinish: Bool) throws {
         guard let writerInput, let videoWriter else { return }
 
@@ -106,6 +117,10 @@ class MovieWriter {
         self.isRunning = false
     }
 
+    /// write frame
+    /// - Parameters:
+    ///   - buffer: pixel buffer of frame
+    ///   - time: time of frame in video
     func write(_ buffer: CVPixelBuffer, at time: CMTime) throws {
         guard isRunning,
               let adaptor else {
