@@ -1,23 +1,24 @@
 //
-//  UIImage+.swift
+//  UIWindowScene+.swift
 //  
 //
-//  Created by p-x9 on 2023/05/19.
+//  Created by p-x9 on 2023/05/20.
 //  
 //
 
 import UIKit
 import CoreVideo
 
-extension UIView {
-    func cvPixelBuffer(scale: CGFloat = 1) -> CVPixelBuffer? {
+@available(iOS 13.0, *)
+extension UIWindowScene {
+    func cvPixelBuffer(size: CGSize, scale: CGFloat = 1) -> CVPixelBuffer? {
         let options = [
             kCVPixelBufferCGImageCompatibilityKey: true,
             kCVPixelBufferCGBitmapContextCompatibilityKey: true
         ] as CFDictionary
 
-        let width = Int(frame.width * scale)
-        let height = Int(frame.height * scale)
+        let width = Int(size.width * scale)
+        let height = Int(size.height * scale)
 
         var buffer: CVPixelBuffer? = nil
         CVPixelBufferCreate(kCFAllocatorDefault, width, height,
@@ -43,10 +44,13 @@ extension UIView {
 
         guard let context else { return nil }
 
-        context.translateBy(x: 0, y: bounds.size.height * scale)
+        context.translateBy(x: 0, y: size.height * scale)
         context.scaleBy(x: scale, y: -scale)
 
-        layer.presentation()?.render(in: context)
+        windows.forEach {
+            context.translateBy(x: $0.frame.minX, y: $0.frame.minY)
+            $0.layer.presentation()?.render(in: context)
+        }
 
         return  buffer
     }

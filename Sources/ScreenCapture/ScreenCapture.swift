@@ -1,11 +1,15 @@
 import UIKit
 import CoreMedia
 
+@available(iOS 13.0, *)
 public final class ScreenCapture {
 
     public var isRunning = false
 
+    private var size: CGSize
+    private var scale: CGFloat
     private weak var window: UIWindow?
+    private weak var windowScene: UIWindowScene?
 
     private var displayLink: CADisplayLink?
 
@@ -13,13 +17,21 @@ public final class ScreenCapture {
     
     public init(for window: UIWindow) {
         self.window = window
+        self.size = window.bounds.size
+        self.scale = window.screen.scale
+    }
+
+    @available(iOS 13.0, *)
+    public init(for scene: UIWindowScene) {
+        self.windowScene = scene
+        self.size = scene.screen.bounds.size
+        self.scale = scene.screen.scale
     }
 
     public func start(outputURL: URL) throws {
-        guard !isRunning, let window else { return }
+        guard !isRunning else { return }
 
-        let scale = window.screen.scale
-        let size = window.bounds.size.scaled(scale)
+        let size = size.scaled(scale)
 
         self.movieWriter = .init(outputUrl: outputURL, size: size)
 
@@ -47,11 +59,20 @@ public final class ScreenCapture {
 
     @objc
     func captureFrame(_ link: CADisplayLink) {
-        guard let window else { return }
-        guard let buffer = window.cvPixelBuffer(scale: window.screen.scale),
-              let movieWriter = movieWriter else {
+        guard let movieWriter else { return }
+
+        let buffer: CVPixelBuffer?
+        
+        if let windowScene {
+            buffer = windowScene.cvPixelBuffer(size: size, scale: scale)
+        } else if let window {
+            buffer = window.cvPixelBuffer(scale: scale)
+        } else {
             return
         }
+
+        guard let buffer else { return }
+
         do {
             let time = CMTimeAdd(movieWriter.currentTime, CMTime(seconds: link.duration, preferredTimescale: 1_000_000))
             try movieWriter.write(buffer, at: time)
