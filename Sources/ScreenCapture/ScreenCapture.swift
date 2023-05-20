@@ -10,6 +10,8 @@ public final class ScreenCapture {
         /// count of recorded frame
         public var frameCount = 0
 
+        public var recordStartedTime: CMTime = .zero
+
         /// A Boolean value that indicates whether first frame was recorded.
         var isWaitingFirstFrame: Bool {
             frameCount == 0
@@ -106,7 +108,8 @@ public final class ScreenCapture {
            let movieWriter {
             displayLink.invalidate()
 
-            let time = CMTimeAdd(movieWriter.currentTime, CMTime(seconds: displayLink.duration, preferredTimescale: 1_000_000))
+            let currentTime: CMTime = .current(preferredTimescale: 1000)
+            let time = currentTime - state.recordStartedTime
             try movieWriter.end(at: time, waitUntilFinish: true)
         }
 
@@ -134,12 +137,21 @@ public final class ScreenCapture {
         guard let buffer else { return }
 
         do {
-            let timeOffset: CFTimeInterval = state.isWaitingFirstFrame ? 0 : 1/CGFloat(config.fps)
-            let time = CMTimeAdd(movieWriter.currentTime, CMTime(seconds: timeOffset, preferredTimescale: 1_000_000))
+            let currentTime: CMTime = .current(preferredTimescale: 1000)
+            if self.state.isWaitingFirstFrame {
+                self._state.recordStartedTime = currentTime
+            }
+            let time = currentTime - self.state.recordStartedTime
             try movieWriter.write(buffer, at: time)
-            _state.frameCount += 1
+            self._state.frameCount += 1
         } catch {
             print(error)
         }
+    }
+}
+
+extension CMTime {
+    static func current(preferredTimescale: CMTimeScale) -> CMTime {
+        CMTimeMakeWithSeconds(CACurrentMediaTime(), preferredTimescale: preferredTimescale)
     }
 }
