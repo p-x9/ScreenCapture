@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "touchtracker",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/p-x9/TouchTracker.git",
+      "state" : {
+        "revision" : "5e0ca1601a6bfaa72393005bb5c5de7b2d3ed8b9",
+        "version" : "0.2.1"
+      }
+    }
+  ],
+  "version" : 2
+}
