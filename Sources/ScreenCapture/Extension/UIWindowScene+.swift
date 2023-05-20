@@ -47,10 +47,14 @@ extension UIWindowScene {
         context.translateBy(x: 0, y: size.height * scale)
         context.scaleBy(x: scale, y: -scale)
 
-        windows.forEach {
-            context.translateBy(x: $0.frame.minX, y: $0.frame.minY)
-            $0.layer.presentation()?.render(in: context)
-        }
+        windows
+            .sorted(by: {
+                $0.windowLevel < $1.windowLevel
+            })
+            .forEach {
+                context.translateBy(x: $0.frame.minX, y: $0.frame.minY)
+                $0.layer.presentation()?.render(in: context)
+            }
 
         return  buffer
     }
