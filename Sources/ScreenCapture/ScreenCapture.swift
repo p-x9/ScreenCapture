@@ -122,7 +122,7 @@ public final class ScreenCapture {
         guard let movieWriter else { return }
 
         let buffer: CVPixelBuffer?
-        
+
         if let windowScene {
             buffer = windowScene.cvPixelBuffer(size: size, scale: scale)
         } else if let window {

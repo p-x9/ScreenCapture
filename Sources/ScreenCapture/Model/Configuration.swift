@@ -22,6 +22,7 @@ public struct Configuration: Equatable {
     public var fps: Int
 
     /// scale factor of recording area
+    /// If nil, the value of UIScreen.scale is used
     public var scale: CGFloat?
 
     public init(codec: AVVideoCodecType, fileType: AVFileType, fps: Int, scale: CGFloat? = nil) {
