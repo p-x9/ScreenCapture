@@ -56,6 +56,11 @@ public final class ScreenCapture {
     /// Write video files frame by frame
     private var movieWriter: MovieWriter?
 
+    private let writeFrameQueue = DispatchQueue(label: "com.p-x9.screenCapture.writeFrame",
+                                                qos: .userInteractive,
+                                                attributes: .concurrent,
+                                                autoreleaseFrequency: .workItem,
+                                                target: .global(qos: .userInteractive))
 
     /// Initializers for recording a particular window
     /// - Parameters:
@@ -136,16 +141,18 @@ public final class ScreenCapture {
 
         guard let buffer else { return }
 
-        do {
-            let currentTime: CMTime = .current(preferredTimescale: 1000)
-            if self.state.isWaitingFirstFrame {
-                self._state.recordStartedTime = currentTime
+        let currentTime: CMTime = .current(preferredTimescale: 1000)
+        if self.state.isWaitingFirstFrame {
+            self._state.recordStartedTime = currentTime
+        }
+        let time = currentTime - self.state.recordStartedTime
+        writeFrameQueue.async {
+            do {
+                try movieWriter.write(buffer, at: time)
+                self._state.frameCount += 1
+            } catch {
+                print(error)
             }
-            let time = currentTime - self.state.recordStartedTime
-            try movieWriter.write(buffer, at: time)
-            self._state.frameCount += 1
-        } catch {
-            print(error)
         }
     }
 }
