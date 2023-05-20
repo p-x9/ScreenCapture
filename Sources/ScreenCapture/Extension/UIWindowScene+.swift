@@ -54,6 +54,7 @@ extension UIWindowScene {
             .forEach {
                 context.translateBy(x: $0.frame.minX, y: $0.frame.minY)
                 $0.layer.presentation()?.render(in: context)
+                context.translateBy(x: -$0.frame.minX, y: -$0.frame.minY)
             }
 
         return  buffer
