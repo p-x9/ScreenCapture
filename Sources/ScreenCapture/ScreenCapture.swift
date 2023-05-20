@@ -56,6 +56,7 @@ public final class ScreenCapture {
     /// Write video files frame by frame
     private var movieWriter: MovieWriter?
 
+    private let captureFrameQueue = DispatchQueue(label: "com.p-x9.screenCapture.captureFrame", target: .main)
     private let writeFrameQueue = DispatchQueue(label: "com.p-x9.screenCapture.writeFrame",
                                                 qos: .userInteractive,
                                                 attributes: .concurrent,
@@ -129,29 +130,31 @@ public final class ScreenCapture {
     func captureFrame(_ link: CADisplayLink) {
         guard let movieWriter else { return }
 
-        let buffer: CVPixelBuffer?
+        captureFrameQueue.async {
+            let buffer: CVPixelBuffer?
 
-        if let windowScene {
-            buffer = windowScene.cvPixelBuffer(size: size, scale: scale)
-        } else if let window {
-            buffer = window.cvPixelBuffer(scale: scale)
-        } else {
-            return
-        }
+            if let windowScene = self.windowScene {
+                buffer = windowScene.cvPixelBuffer(size: self.size, scale: self.scale)
+            } else if let window = self.window {
+                buffer = window.cvPixelBuffer(scale: self.scale)
+            } else {
+                return
+            }
 
-        guard let buffer else { return }
+            guard let buffer else { return }
 
-        let currentTime: CMTime = .current(preferredTimescale: 1000)
-        if self.state.isWaitingFirstFrame {
-            self._state.recordStartedTime = currentTime
-        }
-        let time = currentTime - self.state.recordStartedTime
-        writeFrameQueue.async {
-            do {
-                try movieWriter.write(buffer, at: time)
-                self._state.frameCount += 1
-            } catch {
-                print(error)
+            let currentTime: CMTime = .current(preferredTimescale: 1000)
+            if self.state.isWaitingFirstFrame {
+                self._state.recordStartedTime = currentTime
+            }
+            let time = currentTime - self.state.recordStartedTime
+            self.writeFrameQueue.async {
+                do {
+                    try movieWriter.write(buffer, at: time)
+                    self._state.frameCount += 1
+                } catch {
+                    print(error)
+                }
             }
         }
     }
