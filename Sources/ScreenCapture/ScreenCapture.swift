@@ -10,7 +10,16 @@ public final class ScreenCapture {
         /// count of recorded frame
         public var frameCount = 0
 
+        /// Recording start time
+        /// In fact, the `CACurrentMediaTime` at the time the first frame is written is retained.
         public var recordStartedTime: CMTime = .zero
+
+        /// Retains the size of the window or windowScene at the start of recording.
+        /// The video will remain this size even if the screen is rotated.
+        public var recordInitialSize: CGSize = .zero
+
+        /// Screen orientation when recording starts
+        public var recordInitialOrientation: UIInterfaceOrientation = .unknown
 
         /// A Boolean value that indicates whether first frame was recorded.
         var isWaitingFirstFrame: Bool {
@@ -36,7 +45,13 @@ public final class ScreenCapture {
     public let config: Configuration
 
     /// size of recording area
-    private var size: CGSize
+    private var size: CGSize {
+        windowScene?.screen.bounds.size ?? window?.bounds.size ?? .zero
+    }
+
+    private var orientation: UIInterfaceOrientation {
+        windowScene?.interfaceOrientation ?? window?.windowScene?.interfaceOrientation ?? .portrait
+    }
 
     /// scale factor of recording area
     /// original pixel size is `size` x `scale`
@@ -69,7 +84,6 @@ public final class ScreenCapture {
     ///   - config: configuration of recording
     public init(for window: UIWindow, with config: Configuration = .default) {
         self.window = window
-        self.size = window.bounds.size
         self.scale = config.scale ?? window.screen.scale
         self.config = config
     }
@@ -81,7 +95,6 @@ public final class ScreenCapture {
     @available(iOS 13.0, *)
     public init(for scene: UIWindowScene, with config: Configuration = .default) {
         self.windowScene = scene
-        self.size = scene.screen.bounds.size
         self.scale = config.scale ?? scene.screen.scale
         self.config = config
     }
@@ -105,6 +118,8 @@ public final class ScreenCapture {
         self.displayLink?.add(to: .main, forMode: .common)
 
         self._state = State()
+        self._state.recordInitialSize = self.size
+        self._state.recordInitialOrientation = orientation
         self._state.isRunning = true
     }
 
@@ -133,10 +148,19 @@ public final class ScreenCapture {
         captureFrameQueue.async {
             let buffer: CVPixelBuffer?
 
+            let angle = self.state.recordInitialOrientation.numberOfRightAngleRotations(to: self.orientation) ?? 0
             if let windowScene = self.windowScene {
-                buffer = windowScene.cvPixelBuffer(size: self.size, scale: self.scale)
+                buffer = windowScene.cvPixelBuffer(
+                    size: self._state.recordInitialSize,
+                    scale: self.scale,
+                    rotate: angle
+                )
             } else if let window = self.window {
-                buffer = window.cvPixelBuffer(scale: self.scale)
+                buffer = window.cvPixelBuffer(
+                    size: self._state.recordInitialSize,
+                    scale: self.scale,
+                    rotate: angle
+                )
             } else {
                 return
             }
