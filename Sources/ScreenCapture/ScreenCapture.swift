@@ -71,12 +71,13 @@ public final class ScreenCapture {
     /// Write video files frame by frame
     private var movieWriter: MovieWriter?
 
-    private let captureFrameQueue = DispatchQueue(label: "com.p-x9.screenCapture.captureFrame", target: .main)
+    private let captureFrameQueue = DispatchQueue(label: "com.p-x9.screenCapture.captureFrame",
+                                                  qos: .userInitiated,
+                                                  target: .global(qos: .userInitiated))
     private let writeFrameQueue = DispatchQueue(label: "com.p-x9.screenCapture.writeFrame",
-                                                qos: .userInteractive,
+                                                qos: .userInitiated,
                                                 attributes: .concurrent,
-                                                autoreleaseFrequency: .workItem,
-                                                target: .global(qos: .userInteractive))
+                                                target: .global(qos: .userInitiated))
 
     /// Initializers for recording a particular window
     /// - Parameters:
@@ -146,23 +147,25 @@ public final class ScreenCapture {
         guard let movieWriter else { return }
 
         captureFrameQueue.async {
-            let buffer: CVPixelBuffer?
+            var buffer: CVPixelBuffer?
 
-            let angle = self.state.recordInitialOrientation.numberOfRightAngleRotations(to: self.orientation) ?? 0
-            if let windowScene = self.windowScene {
-                buffer = windowScene.cvPixelBuffer(
-                    size: self._state.recordInitialSize,
-                    scale: self.scale,
-                    rotate: angle
-                )
-            } else if let window = self.window {
-                buffer = window.cvPixelBuffer(
-                    size: self._state.recordInitialSize,
-                    scale: self.scale,
-                    rotate: angle
-                )
-            } else {
-                return
+            DispatchQueue.main.sync {
+                let angle = self.state.recordInitialOrientation.numberOfRightAngleRotations(to: self.orientation) ?? 0
+                if let windowScene = self.windowScene {
+                    buffer = windowScene.cvPixelBuffer(
+                        size: self._state.recordInitialSize,
+                        scale: self.scale,
+                        rotate: angle
+                    )
+                } else if let window = self.window {
+                    buffer = window.cvPixelBuffer(
+                        size: self._state.recordInitialSize,
+                        scale: self.scale,
+                        rotate: angle
+                    )
+                } else {
+                    return
+                }
             }
 
             guard let buffer else { return }
