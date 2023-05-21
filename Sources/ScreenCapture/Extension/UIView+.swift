@@ -10,14 +10,14 @@ import UIKit
 import CoreVideo
 
 extension UIView {
-    func cvPixelBuffer(scale: CGFloat = 1) -> CVPixelBuffer? {
+    func cvPixelBuffer(size: CGSize, scale: CGFloat = 1, rotate: Int = 0) -> CVPixelBuffer? {
         let options = [
             kCVPixelBufferCGImageCompatibilityKey: true,
             kCVPixelBufferCGBitmapContextCompatibilityKey: true
         ] as CFDictionary
 
-        let width = Int(frame.width * scale)
-        let height = Int(frame.height * scale)
+        let width = Int(size.width * scale)
+        let height = Int(size.height * scale)
 
         var buffer: CVPixelBuffer? = nil
         CVPixelBufferCreate(kCFAllocatorDefault, width, height,
@@ -43,9 +43,24 @@ extension UIView {
 
         guard let context else { return nil }
 
-        context.translateBy(x: 0, y: bounds.size.height * scale)
+        context.translateBy(x: 0, y: size.height * scale)
         context.scaleBy(x: scale, y: -scale)
 
+        var rotate = rotate % 4
+        if rotate < 0 { rotate += 4 }
+
+        context.translateBy(x: size.width / 2, y: size.height / 2)
+        context.rotate(by: -CGFloat(rotate) * .pi / 2)
+
+        switch rotate {
+        case 0, 2:
+            context.translateBy(x: -size.width / 2, y: -size.height / 2)
+        case 1, 3:
+            context.translateBy(x: -size.height / 2, y: -size.width / 2)
+        default:
+            break
+        }
+        
         layer.presentation()?.render(in: context)
 
         return  buffer

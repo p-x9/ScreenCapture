@@ -123,7 +123,9 @@ class MovieWriter {
     ///   - time: time of frame in video
     func write(_ buffer: CVPixelBuffer, at time: CMTime) throws {
         guard isRunning,
-              let adaptor else {
+              let adaptor,
+              let videoWriter,
+              videoWriter.status == .writing else {
             throw MovieWriterError.notStarted
         }
 
