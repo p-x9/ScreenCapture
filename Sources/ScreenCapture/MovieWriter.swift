@@ -30,7 +30,7 @@ class MovieWriter {
     /// A Boolean value that indicates whether MovieWriter is recording
     private(set) var isRunning = false
 
-    private var videoWriter: AVAssetWriter?
+    private var assetWriter: AVAssetWriter?
     private var writerInput: AVAssetWriterInput?
     private var adaptor: AVAssetWriterInputPixelBufferAdaptor?
 
@@ -62,9 +62,9 @@ class MovieWriter {
             throw MovieWriterError.alreadyRunning
         }
 
-        self.videoWriter = try AVAssetWriter(url: outputUrl, fileType: fileType)
+        self.assetWriter = try AVAssetWriter(url: outputUrl, fileType: fileType)
 
-        guard let videoWriter else {
+        guard let assetWriter else {
             throw MovieWriterError.failedToStart
         }
 
@@ -79,30 +79,30 @@ class MovieWriter {
             sourcePixelBufferAttributes: sourcePixelBufferAttributes
         )
 
-        videoWriter.add(writerInput)
+        assetWriter.add(writerInput)
 
-        if !videoWriter.startWriting() {
+        if !assetWriter.startWriting() {
             throw MovieWriterError.failedToStart
         }
-        videoWriter.startSession(atSourceTime: .zero)
+        assetWriter.startSession(atSourceTime: .zero)
 
         isRunning = true
     }
 
     /// end video writing
     func end(at time: CMTime, waitUntilFinish: Bool) throws {
-        guard let writerInput, let videoWriter else { return }
+        guard let writerInput, let assetWriter else { return }
 
         guard time >= currentTime else {
             throw MovieWriterError.invalidTime
         }
 
         writerInput.markAsFinished()
-        videoWriter.endSession(atSourceTime: time)
+        assetWriter.endSession(atSourceTime: time)
 
         let semaphore = DispatchSemaphore(value: 0)
 
-        videoWriter.finishWriting {
+        assetWriter.finishWriting {
             semaphore.signal()
         }
 
@@ -110,7 +110,7 @@ class MovieWriter {
 
         semaphore.wait()
 
-        self.videoWriter = nil
+        self.assetWriter = nil
         self.writerInput = nil
         self.adaptor = nil
 
@@ -124,8 +124,8 @@ class MovieWriter {
     func write(_ buffer: CVPixelBuffer, at time: CMTime) throws {
         guard isRunning,
               let adaptor,
-              let videoWriter,
-              videoWriter.status == .writing else {
+              let assetWriter,
+              assetWriter.status == .writing else {
             throw MovieWriterError.notStarted
         }
 
