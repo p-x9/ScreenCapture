@@ -130,7 +130,7 @@ public final class ScreenCapture {
            let movieWriter {
             displayLink.invalidate()
 
-            let currentTime: CMTime = .current(preferredTimescale: 1000)
+            let currentTime: CMTime = .current
             let time = currentTime - state.recordStartedTime
             try movieWriter.end(at: time, waitUntilFinish: true)
         }
@@ -170,7 +170,7 @@ public final class ScreenCapture {
 
             guard let buffer else { return }
 
-            let currentTime: CMTime = .current(preferredTimescale: 1000)
+            let currentTime: CMTime = .current
             if self.state.isWaitingFirstFrame {
                 self._state.recordStartedTime = currentTime
             }
@@ -184,11 +184,5 @@ public final class ScreenCapture {
                 }
             }
         }
-    }
-}
-
-extension CMTime {
-    static func current(preferredTimescale: CMTimeScale) -> CMTime {
-        CMTimeMakeWithSeconds(CACurrentMediaTime(), preferredTimescale: preferredTimescale)
     }
 }
