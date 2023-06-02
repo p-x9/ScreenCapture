@@ -1,5 +1,6 @@
 import UIKit
 import CoreMedia
+import MovieWriter
 
 @available(iOS 13.0, *)
 public final class ScreenCapture {
@@ -112,7 +113,7 @@ public final class ScreenCapture {
                                  codec: config.codec,
                                  fileType: config.fileType)
 
-        try movieWriter?.start()
+        try movieWriter?.start(waitFirstWriting: true)
 
         self.displayLink = CADisplayLink(target: self, selector: #selector(captureFrame(_:)))
         self.displayLink?.preferredFramesPerSecond = config.fps
@@ -130,9 +131,7 @@ public final class ScreenCapture {
            let movieWriter {
             displayLink.invalidate()
 
-            let currentTime: CMTime = .current
-            let time = currentTime - state.recordStartedTime
-            try movieWriter.end(at: time, waitUntilFinish: true)
+            try movieWriter.end(at: .current, waitUntilFinish: true)
         }
 
         self.displayLink = nil
@@ -174,10 +173,11 @@ public final class ScreenCapture {
             if self.state.isWaitingFirstFrame {
                 self._state.recordStartedTime = currentTime
             }
-            let time = currentTime - self.state.recordStartedTime
+
             self.writeFrameQueue.async {
                 do {
-                    try movieWriter.write(buffer, at: time)
+                    guard movieWriter.isRunning else { return }
+                    try movieWriter.writeFrame(buffer, at: currentTime)
                     self._state.frameCount += 1
                 } catch {
                     print(error)

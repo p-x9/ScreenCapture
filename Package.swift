@@ -11,11 +11,15 @@ let package = Package(
             targets: ["ScreenCapture"]
         ),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/p-x9/MovieWriter.git", .upToNextMajor(from: "0.0.1"))
+    ],
     targets: [
         .target(
             name: "ScreenCapture",
-            dependencies: []
+            dependencies: [
+                .product(name: "MovieWriter", package: "MovieWriter")
+            ]
         ),
         .testTarget(
             name: "ScreenCaptureTests",
