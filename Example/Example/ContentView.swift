@@ -19,11 +19,17 @@ struct ContentView: View {
         return tmp.appending(components: "output.mp4")
     }()
 
+    let screenshotOutputURL: URL = {
+        let tmp = FileManager.default.temporaryDirectory
+        return tmp.appending(components: "screenshot.png")
+    }()
+
     var screenCapture: ScreenCapture? {
         sceneDelegate.screenCapture
     }
 
     @State var showPlayer = false
+    @State var showImagePreview = false
 
     var body: some View {
         NavigationView {
@@ -42,6 +48,13 @@ struct ContentView: View {
                 }
                 .padding()
 
+                Button("ScreenShot") {
+                    guard let screenCapture else { return }
+                    try! screenCapture.capture(outputURL: screenshotOutputURL)
+                    showImagePreview = true
+                }
+                .padding()
+
                 List(0..<100) { i in
                     NavigationLink {
                         Text("Row \(i)")
@@ -53,9 +66,14 @@ struct ContentView: View {
             }
             .onAppear {
                 print(outputURL)
+                print(screenshotOutputURL)
             }
             .sheet(isPresented: $showPlayer) {
-                VideoPlayer(player: AVPlayer(url: outputURL))
+                VideoPreview(player: AVPlayer(url: outputURL))
+            }
+            .sheet(isPresented: $showImagePreview) {
+                let image = UIImage(contentsOfFile: screenshotOutputURL.path)!
+                ImagePreview(image: Image(uiImage: image))
             }
         }
     }
