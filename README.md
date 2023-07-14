@@ -33,7 +33,8 @@ let screenCapture = ScreenCapture(for: window,
                                   with: config)
 ```
 
-### Start Recording
+### Video
+#### Start Recording
 ```swift
 let tmpURL = FileManager.default.temporaryDirectory
 let url = tmpURL.appending(components: UUID().uuidString + ".mp4")
@@ -41,9 +42,17 @@ let url = tmpURL.appending(components: UUID().uuidString + ".mp4")
 try screenCapture.start(outputURL: url)
 ```
 
-### End Recording
+#### End Recording
 ```swift
 try screenCapture.end()
+```
+
+### Image
+```swift
+let tmpURL = FileManager.default.temporaryDirectory
+let url = tmpURL.appending(components: UUID().uuidString + ".jpg")
+
+try screenCapture.capture(outputURL: url)
 ```
 
 
