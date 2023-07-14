@@ -1,6 +1,6 @@
 import UIKit
 import CoreMedia
-import MovieWriter
+@_spi(AVKit) import MovieWriter
 
 @available(iOS 13.0, *)
 public final class ScreenCapture {
@@ -154,13 +154,15 @@ public final class ScreenCapture {
                     buffer = windowScene.cvPixelBuffer(
                         size: self._state.recordInitialSize,
                         scale: self.scale,
-                        rotate: angle
+                        rotate: angle,
+                        pool: self.movieWriter?.adaptor?.pixelBufferPool
                     )
                 } else if let window = self.window {
                     buffer = window.cvPixelBuffer(
                         size: self._state.recordInitialSize,
                         scale: self.scale,
-                        rotate: angle
+                        rotate: angle,
+                        pool: self.movieWriter?.adaptor?.pixelBufferPool
                     )
                 } else {
                     return
