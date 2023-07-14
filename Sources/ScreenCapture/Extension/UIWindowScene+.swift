@@ -11,7 +11,13 @@ import CoreVideo
 
 @available(iOS 13.0, *)
 extension UIWindowScene {
-    func cvPixelBuffer(size: CGSize, scale: CGFloat = 1, rotate: Int = 0) -> CVPixelBuffer? {
+    func cvPixelBuffer(
+        size: CGSize,
+        scale: CGFloat = 1,
+        rotate: Int = 0,
+        pool: CVPixelBufferPool? = nil
+    ) -> CVPixelBuffer? {
+        
         let options = [
             kCVPixelBufferCGImageCompatibilityKey: true,
             kCVPixelBufferCGBitmapContextCompatibilityKey: true
@@ -21,8 +27,12 @@ extension UIWindowScene {
         let height = Int(size.height * scale)
 
         var buffer: CVPixelBuffer? = nil
-        CVPixelBufferCreate(kCFAllocatorDefault, width, height,
-                            kCVPixelFormatType_32ARGB, options, &buffer)
+        if let pool {
+            CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &buffer)
+        } else {
+            CVPixelBufferCreate(kCFAllocatorDefault, width, height,
+                                kCVPixelFormatType_32ARGB, options, &buffer)
+        }
 
         guard let buffer else { return nil }
 
