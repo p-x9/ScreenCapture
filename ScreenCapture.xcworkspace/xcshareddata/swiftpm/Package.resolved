@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/p-x9/MovieWriter.git",
       "state" : {
-        "revision" : "b2d7ec1862b96ec2fae1cf375fa8e2883c59467f",
-        "version" : "0.1.0"
+        "revision" : "860983e012fcea7eebf3d4dee0d3f8284f380b4b",
+        "version" : "0.0.1"
       }
     },
     {

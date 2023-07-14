@@ -10,13 +10,7 @@ import UIKit
 import CoreVideo
 
 extension UIView {
-    func cvPixelBuffer(
-        size: CGSize,
-        scale: CGFloat = 1,
-        rotate: Int = 0,
-        pool: CVPixelBufferPool? = nil
-    ) -> CVPixelBuffer? {
-
+    func cvPixelBuffer(size: CGSize, scale: CGFloat = 1, rotate: Int = 0) -> CVPixelBuffer? {
         let options = [
             kCVPixelBufferCGImageCompatibilityKey: true,
             kCVPixelBufferCGBitmapContextCompatibilityKey: true
@@ -26,12 +20,8 @@ extension UIView {
         let height = Int(size.height * scale)
 
         var buffer: CVPixelBuffer? = nil
-        if let pool {
-            CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, pool, &buffer)
-        } else {
-            CVPixelBufferCreate(kCFAllocatorDefault, width, height,
-                                kCVPixelFormatType_32ARGB, options, &buffer)
-        }
+        CVPixelBufferCreate(kCFAllocatorDefault, width, height,
+                            kCVPixelFormatType_32ARGB, options, &buffer)
 
         guard let buffer else { return nil }
 
