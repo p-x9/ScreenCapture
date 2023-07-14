@@ -186,3 +186,51 @@ public final class ScreenCapture {
         }
     }
 }
+
+extension ScreenCapture {
+    /// capture window or windowScene and save as image file.
+    /// - Parameter outputURL: output url of screenshot image file
+    public func capture(outputURL: URL) throws {
+        var buffer: CVPixelBuffer?
+
+        let capture: () -> Void = {
+            let angle = self.state.recordInitialOrientation.numberOfRightAngleRotations(to: self.orientation) ?? 0
+            if let windowScene = self.windowScene {
+                buffer = windowScene.cvPixelBuffer(
+                    size: self.size,
+                    scale: self.scale,
+                    rotate: angle
+                )
+            } else if let window = self.window {
+                buffer = window.cvPixelBuffer(
+                    size: self.size,
+                    scale: self.scale,
+                    rotate: angle
+                )
+            }
+        }
+
+        if Thread.isMainThread {
+            capture()
+        } else {
+            DispatchQueue.main.sync {
+                capture()
+            }
+        }
+
+        guard let buffer else { return }
+
+        let image = UIImage(pixelBuffer: buffer)
+
+        let options: Data.WritingOptions = [
+            .atomic
+        ]
+
+        switch outputURL.lastPathComponent {
+        case "png", "PNG":
+            try image.pngData()?.write(to: outputURL, options: options)
+        default:
+            try image.jpegData(compressionQuality: 1.0)?.write(to: outputURL, options: options)
+        }
+    }
+}
