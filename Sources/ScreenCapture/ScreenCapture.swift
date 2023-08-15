@@ -189,8 +189,7 @@ public final class ScreenCapture {
 
 extension ScreenCapture {
     /// capture window or windowScene and save as image file.
-    /// - Parameter outputURL: output url of screenshot image file
-    public func capture(outputURL: URL) throws {
+    public func capture() throws -> UIImage {
         var buffer: CVPixelBuffer?
 
         let capture: () -> Void = {
@@ -218,9 +217,17 @@ extension ScreenCapture {
             }
         }
 
-        guard let buffer else { return }
+        guard let buffer else {
+            throw ScreenCaptureError.failedToCreatePixelBuffer
+        }
 
-        let image = UIImage(pixelBuffer: buffer)
+        return UIImage(pixelBuffer: buffer)
+    }
+
+    /// capture window or windowScene and save as image file.
+    /// - Parameter outputURL: output url of screenshot image file
+    public func capture(outputURL: URL) throws {
+        let image = try capture()
 
         let options: Data.WritingOptions = [
             .atomic
