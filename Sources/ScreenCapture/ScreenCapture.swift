@@ -80,6 +80,9 @@ public final class ScreenCapture {
                                                 attributes: .concurrent,
                                                 target: .global(qos: .userInitiated))
 
+    /// for notify screen capture events
+    private let notificationCenter = NotificationCenter.default
+
     /// Initializers for recording a particular window
     /// - Parameters:
     ///   - window: target window to be recorded
@@ -106,6 +109,14 @@ public final class ScreenCapture {
     public func start(outputURL: URL) throws {
         guard !isRunning else { return }
 
+        notificationCenter.post(name: Self.willStartRecordingNotification,
+                                object: nil)
+
+        defer {
+            notificationCenter.post(name: Self.didStartRecordingNotification,
+                                    object: nil)
+        }
+
         let size = size.scaled(scale)
 
         self.movieWriter = .init(outputUrl: outputURL,
@@ -127,6 +138,14 @@ public final class ScreenCapture {
 
     /// end recording
     public func end() throws {
+        notificationCenter.post(name: Self.willStopRecordingNotification,
+                                object: nil)
+
+        defer {
+            notificationCenter.post(name: Self.didStopRecordingNotification,
+                                    object: nil)
+        }
+
         if let displayLink,
            let movieWriter {
             displayLink.invalidate()
