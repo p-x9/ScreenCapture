@@ -80,6 +80,7 @@ public final class ScreenCapture {
                                                 attributes: .concurrent,
                                                 target: .global(qos: .userInitiated))
 
+    /// for notify screen capture events
     private let notificationCenter = NotificationCenter.default
 
     /// Initializers for recording a particular window
