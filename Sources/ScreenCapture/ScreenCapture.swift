@@ -72,12 +72,8 @@ public final class ScreenCapture {
     /// Write video files frame by frame
     private var movieWriter: MovieWriter?
 
-    private let captureFrameQueue = DispatchQueue(label: "com.p-x9.screenCapture.captureFrame",
-                                                  qos: .userInitiated,
-                                                  target: .global(qos: .userInitiated))
     private let writeFrameQueue = DispatchQueue(label: "com.p-x9.screenCapture.writeFrame",
                                                 qos: .userInitiated,
-                                                attributes: .concurrent,
                                                 target: .global(qos: .userInitiated))
 
     /// for notify screen capture events
@@ -163,37 +159,33 @@ public final class ScreenCapture {
     @objc
     func captureFrame(_ link: CADisplayLink) {
         guard let movieWriter else { return }
+        var buffer: CVPixelBuffer?
+        let angle = state.recordInitialOrientation.numberOfRightAngleRotations(to: orientation) ?? 0
+        if let windowScene {
+            buffer = windowScene.cvPixelBuffer(
+                size: _state.recordInitialSize,
+                scale: scale,
+                rotate: angle
+            )
+        } else if let window {
+            buffer = window.cvPixelBuffer(
+                size: _state.recordInitialSize,
+                scale: scale,
+                rotate: angle
+            )
+        } else {
+            return
+        }
 
-        captureFrameQueue.async {
-            var buffer: CVPixelBuffer?
+        guard let buffer else { return }
 
-            DispatchQueue.main.sync {
-                let angle = self.state.recordInitialOrientation.numberOfRightAngleRotations(to: self.orientation) ?? 0
-                if let windowScene = self.windowScene {
-                    buffer = windowScene.cvPixelBuffer(
-                        size: self._state.recordInitialSize,
-                        scale: self.scale,
-                        rotate: angle
-                    )
-                } else if let window = self.window {
-                    buffer = window.cvPixelBuffer(
-                        size: self._state.recordInitialSize,
-                        scale: self.scale,
-                        rotate: angle
-                    )
-                } else {
-                    return
-                }
-            }
+        let currentTime: CMTime = .current
+        if state.isWaitingFirstFrame {
+            _state.recordStartedTime = currentTime
+        }
 
-            guard let buffer else { return }
-
-            let currentTime: CMTime = .current
-            if self.state.isWaitingFirstFrame {
-                self._state.recordStartedTime = currentTime
-            }
-
-            self.writeFrameQueue.async {
+        writeFrameQueue.async {
+            autoreleasepool {
                 do {
                     guard movieWriter.isRunning else { return }
                     try movieWriter.writeFrame(buffer, at: currentTime)

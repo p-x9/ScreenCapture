@@ -11,18 +11,20 @@ import CoreVideo
 
 @available(iOS 13.0, *)
 extension UIWindowScene {
-    func cvPixelBuffer(size: CGSize, scale: CGFloat = 1, rotate: Int = 0) -> CVPixelBuffer? {
-        let options = [
-            kCVPixelBufferCGImageCompatibilityKey: true,
-            kCVPixelBufferCGBitmapContextCompatibilityKey: true
-        ] as CFDictionary
+    private static let pixelBufferOptions: CFDictionary = [
+        kCVPixelBufferCGImageCompatibilityKey: true,
+        kCVPixelBufferCGBitmapContextCompatibilityKey: true
+    ] as CFDictionary
 
+    private static let captureColorSpace = CGColorSpaceCreateDeviceRGB()
+
+    func cvPixelBuffer(size: CGSize, scale: CGFloat = 1, rotate: Int = 0) -> CVPixelBuffer? {
         let width = Int(size.width * scale)
         let height = Int(size.height * scale)
 
         var buffer: CVPixelBuffer? = nil
         CVPixelBufferCreate(kCFAllocatorDefault, width, height,
-                            kCVPixelFormatType_32ARGB, options, &buffer)
+                            kCVPixelFormatType_32ARGB, Self.pixelBufferOptions, &buffer)
 
         guard let buffer else { return nil }
 
@@ -39,7 +41,7 @@ extension UIWindowScene {
                                 height: height,
                                 bitsPerComponent: 8,
                                 bytesPerRow: CVPixelBufferGetBytesPerRow(buffer),
-                                space: CGColorSpaceCreateDeviceRGB(),
+                                space: Self.captureColorSpace,
                                 bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)
 
         guard let context else { return nil }
@@ -62,10 +64,14 @@ extension UIWindowScene {
             break
         }
 
-        windows
-            .sorted(by: {
-                $0.windowLevel < $1.windowLevel
-            })
+        let orderedWindows: [UIWindow]
+        if windows.count < 2 {
+            orderedWindows = windows
+        } else {
+            orderedWindows = windows.sorted { $0.windowLevel < $1.windowLevel }
+        }
+
+        orderedWindows
             .forEach {
                 context.translateBy(x: $0.frame.minX, y: $0.frame.minY)
                 $0.layer.presentation()?.render(in: context)

@@ -10,18 +10,20 @@ import UIKit
 import CoreVideo
 
 extension UIView {
-    func cvPixelBuffer(size: CGSize, scale: CGFloat = 1, rotate: Int = 0) -> CVPixelBuffer? {
-        let options = [
-            kCVPixelBufferCGImageCompatibilityKey: true,
-            kCVPixelBufferCGBitmapContextCompatibilityKey: true
-        ] as CFDictionary
+    private static let pixelBufferOptions: CFDictionary = [
+        kCVPixelBufferCGImageCompatibilityKey: true,
+        kCVPixelBufferCGBitmapContextCompatibilityKey: true
+    ] as CFDictionary
 
+    private static let captureColorSpace = CGColorSpaceCreateDeviceRGB()
+
+    func cvPixelBuffer(size: CGSize, scale: CGFloat = 1, rotate: Int = 0) -> CVPixelBuffer? {
         let width = Int(size.width * scale)
         let height = Int(size.height * scale)
 
         var buffer: CVPixelBuffer? = nil
         CVPixelBufferCreate(kCFAllocatorDefault, width, height,
-                            kCVPixelFormatType_32ARGB, options, &buffer)
+                            kCVPixelFormatType_32ARGB, Self.pixelBufferOptions, &buffer)
 
         guard let buffer else { return nil }
 
@@ -38,7 +40,7 @@ extension UIView {
                                 height: height,
                                 bitsPerComponent: 8,
                                 bytesPerRow: CVPixelBufferGetBytesPerRow(buffer),
-                                space: CGColorSpaceCreateDeviceRGB(),
+                                space: Self.captureColorSpace,
                                 bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)
 
         guard let context else { return nil }
